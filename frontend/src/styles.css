@@ -65,6 +65,13 @@ body {
   gap: 12px;
 }
 
+.auth-badge {
+  color: var(--muted);
+  font-size: 13px;
+  margin-left: auto;
+  margin-right: 12px;
+}
+
 .nav button {
   background: transparent;
   border: 1px solid var(--stroke);

@@ -89,6 +89,9 @@ const App = () => {
             <p>Live events in Sydney, curated from public sources.</p>
           </div>
         </div>
+        <div className="auth-badge">
+          {user ? `Signed in as ${user.displayName || user.email}` : 'Not signed in'}
+        </div>
         <nav className="nav">
           <button
             className={view === 'list' ? 'active' : ''}
