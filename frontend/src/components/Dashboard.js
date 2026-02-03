@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 const DEFAULT_CITY = 'Sydney';
 const API_BASE = process.env.REACT_APP_API_BASE || '';
@@ -46,7 +46,7 @@ const Dashboard = ({ user, onAuthChange }) => {
     sourceUrl: ''
   });
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -67,11 +67,11 @@ const Dashboard = ({ user, onAuthChange }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     if (user) loadEvents();
-  }, [user]);
+  }, [user, loadEvents]);
 
   const handleMockLogin = async (e) => {
     e.preventDefault();
