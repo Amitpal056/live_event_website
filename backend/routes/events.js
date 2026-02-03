@@ -6,12 +6,36 @@ const User = require('../models/User');
 const router = express.Router();
 
 const useMockAuth = process.env.USE_MOCK_AUTH === 'true';
+const crypto = require('crypto');
+
+const verifyToken = (token) => {
+  const secret = process.env.SESSION_SECRET || 'your-secret-key';
+  const [data, signature] = (token || '').split('.');
+  if (!data || !signature) return null;
+  const expected = crypto.createHmac('sha256', secret).update(data).digest('base64url');
+  if (expected !== signature) return null;
+  try {
+    return JSON.parse(Buffer.from(data, 'base64url').toString('utf8'));
+  } catch (err) {
+    return null;
+  }
+};
 
 const ensureAuth = async (req, res, next) => {
   if (req.user) return next();
   if (req.session && req.session.user) {
     req.user = req.session.user;
     return next();
+  }
+  if (req.headers['x-auth-token']) {
+    const payload = verifyToken(req.headers['x-auth-token']);
+    if (payload?.userId) {
+      const user = await User.findById(payload.userId);
+      if (user) {
+        req.user = user;
+        return next();
+      }
+    }
   }
   if (useMockAuth && req.headers['x-mock-token']) {
     const email = Buffer.from(req.headers['x-mock-token'], 'base64').toString('utf8');

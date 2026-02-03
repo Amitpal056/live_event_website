@@ -5,10 +5,12 @@ const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 const apiFetch = (path, options = {}) => {
   const token = localStorage.getItem('mockToken');
+  const authToken = localStorage.getItem('authToken');
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
-    ...(token ? { 'x-mock-token': token } : {})
+    ...(token ? { 'x-mock-token': token } : {}),
+    ...(authToken ? { 'x-auth-token': authToken } : {})
   };
   return fetch(`${API_BASE}${path}`, { ...options, headers, credentials: 'include' });
 };

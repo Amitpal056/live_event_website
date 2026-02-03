@@ -44,9 +44,13 @@ const App = () => {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem('mockToken');
+      const authToken = localStorage.getItem('authToken');
       const res = await fetch(`${API_BASE}/api/auth/me`, {
         credentials: 'include',
-        headers: token ? { 'x-mock-token': token } : {}
+        headers: {
+          ...(token ? { 'x-mock-token': token } : {}),
+          ...(authToken ? { 'x-auth-token': authToken } : {})
+        }
       });
       if (!res.ok) {
         setUser(null);
@@ -60,6 +64,14 @@ const App = () => {
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('authToken', token);
+      params.delete('token');
+      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
     fetchEvents();
     checkAuth();
   }, []);

@@ -1,14 +1,43 @@
 const express = require('express');
 const passport = require('passport');
+const crypto = require('crypto');
 const User = require('../models/User');
 
 const router = express.Router();
 
 const useMockAuth = process.env.USE_MOCK_AUTH === 'true';
 
+const signToken = (payload) => {
+  const secret = process.env.SESSION_SECRET || 'your-secret-key';
+  const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', secret).update(data).digest('base64url');
+  return `${data}.${signature}`;
+};
+
+const verifyToken = (token) => {
+  const secret = process.env.SESSION_SECRET || 'your-secret-key';
+  const [data, signature] = (token || '').split('.');
+  if (!data || !signature) return null;
+  const expected = crypto.createHmac('sha256', secret).update(data).digest('base64url');
+  if (expected !== signature) return null;
+  try {
+    return JSON.parse(Buffer.from(data, 'base64url').toString('utf8'));
+  } catch (err) {
+    return null;
+  }
+};
+
 router.get('/me', (req, res) => {
   if (req.user) return res.json(req.user);
   if (req.session && req.session.user) return res.json(req.session.user);
+  if (req.headers['x-auth-token']) {
+    const payload = verifyToken(req.headers['x-auth-token']);
+    if (payload?.userId) {
+      return User.findById(payload.userId)
+        .then((user) => (user ? res.json(user) : res.status(401).json({ error: 'Not authenticated' })))
+        .catch(() => res.status(401).json({ error: 'Not authenticated' }));
+    }
+  }
   if (useMockAuth && req.headers['x-mock-token']) {
     const email = Buffer.from(req.headers['x-mock-token'], 'base64').toString('utf8');
     return User.findOne({ email })
@@ -53,7 +82,10 @@ if (useMockAuth) {
     '/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     (req, res) => {
-      res.redirect(process.env.AUTH_SUCCESS_REDIRECT || '/');
+      const token = signToken({ userId: req.user.id, ts: Date.now() });
+      const redirectBase = process.env.AUTH_SUCCESS_REDIRECT || '/';
+      const joiner = redirectBase.includes('?') ? '&' : '?';
+      res.redirect(`${redirectBase}${joiner}token=${token}`);
     }
   );
 }
