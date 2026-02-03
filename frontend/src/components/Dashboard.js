@@ -128,23 +128,34 @@ const Dashboard = ({ user, onAuthChange }) => {
     return (
       <section className="dashboard auth-panel">
         <h2>Dashboard login</h2>
-        <p>Mock auth is enabled for local demos.</p>
-        <form onSubmit={handleMockLogin} className="auth-form">
-          <input
-            type="text"
-            placeholder="Display name"
-            value={authForm.displayName}
-            onChange={(e) => setAuthForm({ ...authForm, displayName: e.target.value })}
-          />
-          <input
-            type="email"
-            placeholder="Email address"
-            value={authForm.email}
-            onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-            required
-          />
-          <button type="submit">Sign in</button>
-        </form>
+        {process.env.REACT_APP_USE_MOCK_AUTH === 'true' ? (
+          <>
+            <p>Mock auth is enabled for local demos.</p>
+            <form onSubmit={handleMockLogin} className="auth-form">
+              <input
+                type="text"
+                placeholder="Display name"
+                value={authForm.displayName}
+                onChange={(e) => setAuthForm({ ...authForm, displayName: e.target.value })}
+              />
+              <input
+                type="email"
+                placeholder="Email address"
+                value={authForm.email}
+                onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
+                required
+              />
+              <button type="submit">Sign in</button>
+            </form>
+          </>
+        ) : (
+          <>
+            <p>Sign in with Google to access the dashboard.</p>
+            <a className="oauth-button" href={`${API_BASE}/api/auth/google`}>
+              Continue with Google
+            </a>
+          </>
+        )}
       </section>
     );
   }
