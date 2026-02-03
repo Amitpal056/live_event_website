@@ -11,12 +11,32 @@ const app = express();
 require('./config/passport');
 
 // Middleware
-app.use(cors());
+const rawOrigins = process.env.FRONTEND_ORIGIN || process.env.AUTH_SUCCESS_REDIRECT || '';
+const allowedOrigins = rawOrigins
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+app.set('trust proxy', 1);
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    const cleanOrigin = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(cleanOrigin)) return cb(null, true);
+    return cb(new Error('CORS not allowed'));
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24 * 7
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
