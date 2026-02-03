@@ -45,6 +45,7 @@ const App = () => {
     try {
       const token = localStorage.getItem('mockToken');
       const res = await fetch(`${API_BASE}/api/auth/me`, {
+        credentials: 'include',
         headers: token ? { 'x-mock-token': token } : {}
       });
       if (!res.ok) {
@@ -62,6 +63,12 @@ const App = () => {
     fetchEvents();
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (view === 'dashboard') {
+      checkAuth();
+    }
+  }, [view]);
 
   const heroStats = useMemo(() => {
     const withDates = events.filter((e) => e.startDate);
