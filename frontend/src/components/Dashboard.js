@@ -10,7 +10,7 @@ const apiFetch = (path, options = {}) => {
     ...(options.headers || {}),
     ...(token ? { 'x-mock-token': token } : {})
   };
-  return fetch(`${API_BASE}${path}`, { ...options, headers });
+  return fetch(`${API_BASE}${path}`, { ...options, headers, credentials: 'include' });
 };
 
 const formatDate = (value) => {
@@ -68,6 +68,12 @@ const Dashboard = ({ user, onAuthChange }) => {
       setLoading(false);
     }
   }, [filters]);
+
+  useEffect(() => {
+    if (onAuthChange) {
+      onAuthChange();
+    }
+  }, [onAuthChange]);
 
   useEffect(() => {
     if (user) loadEvents();
